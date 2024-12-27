@@ -10,12 +10,14 @@ doctor_router = fastapi.APIRouter(prefix="/doctors")
 
 @doctor_router.get("/", response_model=List[DoctorOut])
 async def get_doctors():
-    logger.info("Getting all doctors")
+    logger.info("Router: Getting all doctors")
     return DoctorController.get_doctors()
 
 
 @doctor_router.get("/{doctor_id}", response_model=DoctorOut)
 async def get_doctor(doctor_id: int):
+    logger.info(f"Router: Getting Doctor with ID: {doctor_id}")
+
     return DoctorController.get_doctor(doctor_id)
 
 
