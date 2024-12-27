@@ -18,3 +18,5 @@ class Review(Base):
 
     property = relationship('Property', back_populates='reviews')
     user = relationship('User', back_populates='reviews')
+    doctor = relationship('Doctor', back_populates='reviews')
+    doctor_id = Column(Integer, ForeignKey('doctor.id', ondelete='CASCADE'))
