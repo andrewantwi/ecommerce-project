@@ -40,7 +40,6 @@ class DoctorController:
     def create_doctor(doctor: DoctorIn):
         try:
             with DBSession() as db:
-                Doctor.validate_doctor(doctor, db)
                 doctor_instance = Doctor.create_doctor(doctor, db)
                 db.commit()
                 db.refresh(doctor_instance)

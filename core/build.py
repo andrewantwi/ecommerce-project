@@ -4,6 +4,7 @@ from core import setup as db_setup
 from api.v1.router import user
 from api.v1.router import doctor
 from config.setting import app_settings
+from api.v1.router import patient
 
 
 def register_database() -> None:
@@ -28,6 +29,11 @@ class AppBuilder:
             doctor.doctor_router,
             prefix=app_settings.API_PREFIX,
             tags=["Doctor"]
+        )
+        self._app.include_router(
+            patient.patient_router,
+            prefix=app_settings.API_PREFIX,
+            tags=["Patient"]
         )
 
         @self._app.get("/", include_in_schema=False)

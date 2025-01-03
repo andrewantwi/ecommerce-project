@@ -1,9 +1,10 @@
 from datetime import datetime
 from fastapi import HTTPException, status
 from loguru import logger
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship, Session
 from sqlalchemy.exc import SQLAlchemyError  # Import for handling SQL exceptions
+from fastapi.encoders import jsonable_encoder
 
 from core.setup import Base
 from schemas.doctor import DoctorIn, DoctorUpdate
@@ -17,15 +18,24 @@ class Doctor(Base):
     email = Column(String, unique=True)
     password = Column(String)
     created_at = Column(String, default=lambda: datetime.utcnow().isoformat())
-
     reviews = relationship('Review', back_populates='doctor')
+    appointments = relationship("Appointment", back_populates="doctor")
+
 
     def __str__(self) -> str:
         return self.username
 
-    @staticmethod
-    def extract_username(email: str):
-        return email.split('@')[0]
+
+    @classmethod
+    def get_doctors(cls, db: Session):
+        logger.info(f"Model: Getting Doctors")
+        return db.query(cls).all()
+
+    @classmethod
+    def get_doctor(cls, doctor_id: int, db: Session):
+        logger.info(f"Model: Getting Doctor")
+
+        return db.query(cls).filter(cls.id == doctor_id).first()
 
     @classmethod
     def validate_id(cls, doctor_id: int, db: Session):
@@ -62,15 +72,14 @@ class Doctor(Base):
     @classmethod
     def create_doctor(cls, doctor: DoctorIn, db: Session):
         try:
-            username = cls.extract_username(doctor.email)
-            doctor_instance = cls(**doctor.dict(), username=username)
+            doctor_instance = cls(**doctor.model_dump())
             db.add(doctor_instance)
             db.commit()
             db.refresh(doctor_instance)
             logger.info(f"Model: Doctor created with ID {doctor_instance.id}")
             return doctor_instance
         except SQLAlchemyError as e:
-            logger.error(f"Model: SQLAlchemy Error while creating doctor {doctor.email}: {str(e)}")
+            logger.error(f"Model: SQLAlchemy Error while creating doctor {doctor.username}: {str(e)}")
             db.rollback()  # Ensure the transaction is rolled back on error
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database error")
 
@@ -95,6 +104,7 @@ class Doctor(Base):
     def delete_doctor(cls, doctor_id: int, db: Session):
         try:
             doctor = db.query(cls).filter(cls.id == doctor_id).first()
+            print(jsonable_encoder(doctor),'doc obj')
             if doctor is None:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Doctor not found")
             db.delete(doctor)
