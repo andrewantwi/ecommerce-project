@@ -46,7 +46,7 @@ class DoctorController:
                 logger.info(f"Controller: Doctor created with ID {doctor_instance.id}")
                 return doctor_instance
         except HTTPException as e:
-            logger.error(f"Controller: Validation failed for doctor {doctor.email}: {str(e.detail)}")
+            logger.error(f"Controller: Creation failed for doctor {doctor}: {str(e.detail)}")
             raise e  # Re-raise the exception if it's an HTTPException
         except Exception as e:
             logger.error(f"Controller: Error creating doctor: {str(e)}")
@@ -56,7 +56,6 @@ class DoctorController:
     def update_doctor(doctor_id: int, update_data: DoctorUpdate):
         try:
             with DBSession() as db:
-                Doctor.validate_id(doctor_id, db)
                 doctor = Doctor.update_doctor(doctor_id, update_data, db)
                 db.commit()
                 db.refresh(doctor)
@@ -73,7 +72,6 @@ class DoctorController:
     def delete_doctor(doctor_id: int):
         try:
             with DBSession() as db:
-                Doctor.validate_id(doctor_id, db)
                 doctor = Doctor.delete_doctor(doctor_id, db)
                 db.commit()
                 logger.info(f"Controller: Doctor with ID {doctor_id} deleted")

@@ -12,14 +12,10 @@ class Review(Base):
     id = Column(Integer, primary_key=True)
     review = Column(String)
     rating = Column(Integer)
-    property_id = Column(Integer, ForeignKey('property.id', ondelete='CASCADE'))
-    user_id = Column(Integer, ForeignKey('user.id', ondelete='CASCADE'))
     doctor_id = Column(Integer, ForeignKey('doctor.id', ondelete='CASCADE'))  # Corrected foreign key
     patient_id = Column(Integer, ForeignKey('patient.id', ondelete='CASCADE'))  # Corrected foreign key
 
     created_at = Column(String, default=datetime.now().isoformat())
 
-    property = relationship('Property', back_populates='reviews')
-    user = relationship('User', back_populates='reviews')
     doctor = relationship('Doctor', back_populates='reviews')
     patient = relationship('Patient', back_populates='reviews')

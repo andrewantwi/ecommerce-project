@@ -4,8 +4,8 @@ from pydantic import BaseModel
 
 
 class PatientIn(BaseModel):
+    username: str
     email: str
-    password: str
 
 
 class PatientOut(BaseModel):
@@ -13,8 +13,10 @@ class PatientOut(BaseModel):
     email: str
     username: str
     created_at: datetime
+    updated_at: datetime
 
 
 class PatientUpdate(BaseModel):
     username: str
-    password: str
+    email: str
+

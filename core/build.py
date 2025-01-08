@@ -1,8 +1,7 @@
 from fastapi import FastAPI, responses
 
 from core import setup as db_setup
-from api.v1.router import user
-from api.v1.router import doctor
+from api.v1.router import doctor, appointment
 from config.setting import app_settings
 from api.v1.router import patient
 
@@ -19,12 +18,6 @@ class AppBuilder:
 
     def register_routes(self):
         """ Register all routes """
-
-        self._app.include_router(
-            user.user_router,
-            prefix=app_settings.API_PREFIX,
-            tags=["User"])
-
         self._app.include_router(
             doctor.doctor_router,
             prefix=app_settings.API_PREFIX,
@@ -34,6 +27,12 @@ class AppBuilder:
             patient.patient_router,
             prefix=app_settings.API_PREFIX,
             tags=["Patient"]
+        )
+
+        self._app.include_router(
+            appointment.appointment_router,
+            prefix=app_settings.API_PREFIX,
+            tags=["Appointment"]
         )
 
         @self._app.get("/", include_in_schema=False)
