@@ -18,7 +18,7 @@ async def get_patients():
 async def get_patient(patient_id: int):
     logger.info(f"Router: Getting Patient with ID: {patient_id}")
 
-    return PatientController.get_patient(patient_id)
+    return PatientController.get_patient_by_id(patient_id)
 
 
 @patient_router.post("/", response_model=PatientOut)

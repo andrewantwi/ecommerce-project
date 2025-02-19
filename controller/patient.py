@@ -1,10 +1,12 @@
 from loguru import logger
 from fastapi import HTTPException, status
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+from fastapi.encoders import jsonable_encoder
 
 from models.patient import Patient
 from schemas.patient import PatientIn, PatientUpdate
 from utils.session import SessionManager as DBSession
-
 
 class PatientController:
 
@@ -12,26 +14,23 @@ class PatientController:
     def get_patients():
         try:
             with DBSession() as db:
-                patients = Patient.get_patients(db)
-                return patients
+                logger.info("Controller: Fetching all patients")
+                patients = db.query(Patient).all()
+                patients_list = [patient.to_dict() for patient in patients]
+                return patients_list
         except Exception as e:
             logger.error(f"Controller: Error fetching patients: {str(e)}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error fetching patients")
 
     @staticmethod
-    def get_patient(patient_id: int):
+    def get_patient_by_id(patient_id: int):
         try:
             with DBSession() as db:
-                logger.info(f"Controller: Getting Patient with ID: {patient_id}")
-                patient = Patient.get_patient(patient_id, db)
-                if patient is None:
-                    logger.warning(f"Controller: Patient with ID {patient_id} not found")
+                logger.info(f"Controller: Fetching patient with ID: {patient_id}")
+                patient = db.query(Patient).filter(Patient.id == patient_id).first()
+                if not patient:
                     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
-                logger.info(f"Controller: Patient found {patient}")
-                return patient
-        except HTTPException as e:
-            logger.warning(f"Controller: {str(e.detail)}")
-            raise e  # Re-raise the exception if it's an HTTPException
+                return patient.to_dict()
         except Exception as e:
             logger.error(f"Controller: Error fetching patient with ID {patient_id}: {str(e)}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error fetching patient")
@@ -40,47 +39,47 @@ class PatientController:
     def create_patient(patient: PatientIn):
         try:
             with DBSession() as db:
-                patient_instance = Patient.create_patient(patient, db)
+                patient_instance = Patient(**patient.model_dump())
+                db.add(patient_instance)
                 db.commit()
                 db.refresh(patient_instance)
                 logger.info(f"Controller: Patient created with ID {patient_instance.id}")
-                return patient_instance
-        except HTTPException as e:
-            logger.error(f"Controller: Validation failed for patient {patient.email}: {str(e.detail)}")
-            raise e  # Re-raise the exception if it's an HTTPException
-        except Exception as e:
-            logger.error(f"Controller: Error creating patient: {str(e)}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error creating patient")
+                return patient_instance.to_dict()
+        except SQLAlchemyError as e:
+            logger.error(f"Controller: SQLAlchemy Error while creating patient {patient.email}: {str(e)}")
+            db.rollback()
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database error")
 
     @staticmethod
     def update_patient(patient_id: int, update_data: PatientUpdate):
         try:
             with DBSession() as db:
-                Patient.validate_id(patient_id, db)
-                patient = Patient.update_patient(patient_id, update_data, db)
+                logger.info(f"Controller: Updating patient with ID {patient_id}")
+                patient = db.query(Patient).filter(Patient.id == patient_id).first()
+                if not patient:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
+                for key, value in update_data.model_dump(exclude_unset=True).items():
+                    setattr(patient, key, value)
                 db.commit()
                 db.refresh(patient)
-                logger.info(f"Controller: Patient with ID {patient_id} updated")
-                return patient
-        except HTTPException as e:
-            logger.error(f"Controller: Patient with ID {patient_id} not found: {str(e.detail)}")
-            raise e
-        except Exception as e:
-            logger.error(f"Controller: Error updating patient with ID {patient_id}: {str(e)}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error updating patient")
+                return patient.to_dict()
+        except SQLAlchemyError as e:
+            logger.error(f"Controller: SQLAlchemy Error while updating patient with ID {patient_id}: {str(e)}")
+            db.rollback()
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database error")
 
     @staticmethod
     def delete_patient(patient_id: int):
         try:
             with DBSession() as db:
-                Patient.validate_id(patient_id, db)
-                patient = Patient.delete_patient(patient_id, db)
+                logger.info(f"Controller: Deleting patient with ID {patient_id}")
+                patient = db.query(Patient).filter(Patient.id == patient_id).first()
+                if not patient:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
+                db.delete(patient)
                 db.commit()
-                logger.info(f"Controller: Patient with ID {patient_id} deleted")
-                return patient
-        except HTTPException as e:
-            logger.error(f"Controller: Patient with ID {patient_id} not found: {str(e.detail)}")
-            raise e
-        except Exception as e:
-            logger.error(f"Controller: Error deleting patient with ID {patient_id}: {str(e)}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error deleting patient")
+                return {"message": "Patient deleted successfully"}
+        except SQLAlchemyError as e:
+            logger.error(f"Controller: SQLAlchemy Error while deleting patient with ID {patient_id}: {str(e)}")
+            db.rollback()
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database error")
