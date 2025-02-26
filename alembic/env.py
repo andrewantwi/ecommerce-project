@@ -8,9 +8,8 @@ from alembic import context
 from core.setup import Base
 
 
-from models.patient import Patient
-from models.review import Review
-from models.doctor import Doctor
+from models.product import Product
+from models.cart import Cart
 
 
 # this is the Alembic Config object, which provides
