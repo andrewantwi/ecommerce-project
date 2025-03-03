@@ -23,7 +23,7 @@ class Product(Base):
 
     shop = relationship("Shop", back_populates="products")
     cart_items = relationship("CartItem", back_populates="product", cascade="all, delete-orphan")
-    category = relationship("Category", back_populates="products")  # Relationship with categories
+    category = relationship("Category", back_populates="products")
 
     def to_dict(self):
         return {

@@ -19,8 +19,7 @@ async def get_categories():
 @category_router.get("/{category_id}", response_model=CategoryOut)
 async def get_category(category_id: int):
     logger.info(f"Router: Getting Category with ID: {category_id}")
-
-    return CategoryController.get_category(category_id)
+    return CategoryController.get_category_by_id(category_id)
 
 
 @category_router.post("/", response_model=CategoryOut)
