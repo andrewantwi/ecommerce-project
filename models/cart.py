@@ -15,8 +15,8 @@ class Cart(Base):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
-    user = relationship("User", back_populates="cart")
-    # Relationship with Cart Items
+    user = relationship("User", back_populates="cart", foreign_keys=[user_id])
+
     cart_items = relationship("CartItem", back_populates="cart",lazy="subquery", cascade="all, delete-orphan")
 
     def to_dict(self):

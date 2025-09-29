@@ -2,6 +2,7 @@ from loguru import logger
 from fastapi import HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
 
+from models import Category, Shop
 from models.product import Product
 from schemas.product import ProductIn, ProductUpdate
 from utils.session import SessionManager as DBSession
@@ -44,19 +45,41 @@ class ProductController:
     def create_product(product: ProductIn):
         try:
             with DBSession() as db:
+                category = db.get(Category, product.category_id)
+                shop = db.get(Shop, product.shop_id)
+                if not category:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Category with id {product.category_id} does not exist. Please provide a valid category_id."
+                    )
+                if not shop:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"shop with id {product.shop_id} does not exist. Please provide a valid shop_id."
+                    )
+
                 product_instance = Product(**product.model_dump())
-                logger.info(f"Controller: Creating product: {product_instance}")
+                logger.info(f"Controller: Creating product: {product_instance.to_dict()}")
                 db.add(product_instance)
                 db.commit()
                 db.refresh(product_instance)
-                logger.info(f"Controller: Product created with ID {product_instance.name}")
+                logger.info(f"Controller: Product created with ID {product_instance.id}")
                 return product_instance.to_dict()
+
         except SQLAlchemyError as e:
             logger.error(f"Controller: SQLAlchemy Error while creating product {product.name}: {str(e)}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="A database error occurred while creating the product."
+            )
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error(f"Controller: Error creating product: {str(e)}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error creating product: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Unexpected error while creating product."
+            )
 
     @staticmethod
     def update_product(product_id: int, update_data: ProductUpdate):

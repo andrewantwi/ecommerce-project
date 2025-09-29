@@ -10,7 +10,8 @@ from typing import List, Optional
 class ProductIn(BaseModel):
     name: str
     description: Optional[str] = None
-    category_id: Optional[int]
+    category_id: Optional[int] = None
+    shop_id: Optional[int] = None
     price: float
     is_available: bool = True
     image_urls: List[str]
@@ -20,7 +21,8 @@ class ProductOut(BaseModel):
     id: int
     name: str
     description: Optional[str] = None
-    category_id: Optional[int]
+    category_id: Optional[int] = None
+    shop_id: Optional[int] = None
     price: float
     is_available: bool = True
     image_urls: List[str]
@@ -29,7 +31,8 @@ class ProductOut(BaseModel):
 class ProductUpdate(BaseModel):
     name: str
     description: Optional[str] = None
-    category_id: Optional[int]
+    category_id: Optional[int] = None
+    shop_id: Optional[int] = None
     price: float
     is_available: bool = True
     image_urls: List[str]

@@ -36,21 +36,23 @@ class CartController:
             logger.error(f"Controller: Error fetching cart with ID {cart_id}: {str(e)}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error fetching cart")
 
+
     @staticmethod
-    def create_cart(cart: CartIn):
+    def create_cart(cart: CartIn, db):
         try:
-            with DBSession() as db:
-                cart_instance = Cart(**cart.model_dump())
-                db.add(cart_instance)
-                db.commit()
-                db.refresh(cart_instance)
-                logger.info(f"Controller: Cart created with ID {cart_instance.id}")
-                return cart_instance.to_dict()
+            cart_instance = Cart(**cart.model_dump())
+            db.add(cart_instance)
+            db.commit()
+            db.refresh(cart_instance)
+            logger.info(f"Controller: Cart created with ID {cart_instance.id}")
+            return cart_instance
         except SQLAlchemyError as e:
             logger.error(f"Controller: SQLAlchemy Error while creating cart {cart.user_id}: {str(e)}")
             db.rollback()
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database error")
-
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database error"
+            )
     @staticmethod
     def update_cart(cart_id: int, update_data: CartUpdate):
         try:

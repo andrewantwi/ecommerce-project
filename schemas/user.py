@@ -8,7 +8,7 @@ class UserUpdate(BaseModel):
     full_name: str
     email: EmailStr
     is_active: Optional[bool] = True
-    is_admin: Optional[bool] = False
+    is_owner: Optional[bool] = False
 
 class UserIn(UserUpdate):
     hashed_password: str  # Accept plain text password for signup, but hash before storing

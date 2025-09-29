@@ -1,13 +1,14 @@
 from loguru import logger
 from fastapi import HTTPException, status
-from sqlalchemy.exc import SQLAlchemyError
-
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy import or_
 from models.user import User
 from controller.cart import CartController
 from schemas.cart import CartIn
 from schemas.user import UserIn, UserUpdate
 from utils.session import SessionManager as DBSession
 from fastapi.encoders import jsonable_encoder
+
 
 
 class UserController:
@@ -42,24 +43,65 @@ class UserController:
             logger.error(f"Controller: Error fetching user with ID {user_id}: {str(e)}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error fetching user")
 
+
+
     @staticmethod
     def create_user(user: UserIn):
         try:
             with DBSession() as db:
+                exists = db.query(User).filter(
+                    or_(User.full_name == user.full_name, User.email == user.email)
+                ).first()
+
+                if exists:
+                    if exists.full_name == user.full_name:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="User with this Full-name already exists"
+                        )
+                    if exists.email == user.email:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="User with this Email already exists"
+                        )
+
                 user_instance = User(**user.model_dump())
-                logger.info(f"Controller: Creating user: {user_instance.to_dict()}")
                 db.add(user_instance)
                 db.commit()
                 db.refresh(user_instance)
-                logger.info(f"Controller: User created with ID {user_instance.full_name}")
+
+                cart_in = CartIn(user_id=user_instance.id)
+                cart = CartController.create_cart(cart_in, db)
+                user_instance.cart = cart
+
+                db.commit()
+                db.refresh(user_instance)
 
                 return user_instance.to_dict()
+
+        except HTTPException:
+            # let FastAPI handle 400 errors
+            raise
+
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User with this Email or Full-name already exists"
+            )
+
         except SQLAlchemyError as e:
-            logger.error(f"Controller: SQLAlchemy Error while creating user {user.full_name}: {str(e)}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Database error: {str(e)}"
+            )
+
         except Exception as e:
-            logger.error(f"Controller: Error creating user: {str(e)}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error creating user: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Unexpected error: {str(e)}"
+            )
 
     @staticmethod
     def update_user(user_id: int, update_data: UserUpdate):

@@ -14,7 +14,10 @@ class User(Base):
     hashed_password = Column(String, nullable=False)  # Store hashed password, not plain text!
     is_active = Column(Boolean, default=True)  # User can be active/inactive
     is_admin = Column(Boolean, default=False)  # For admin access control
+    is_owner = Column(Boolean, default=False)  # For owner access control
     created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
 
     shops = relationship("Shop", back_populates="owner")
     cart = relationship("Cart", back_populates="user", uselist=False, cascade="all, delete-orphan")
@@ -26,6 +29,8 @@ class User(Base):
             "email": self.email,
             "is_active": self.is_active,
             "is_admin": self.is_admin,
-            "created_at": self.created_at.isoformat() if self.created_at else None
+            "is_owner": self.is_owner,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 

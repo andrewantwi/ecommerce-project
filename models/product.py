@@ -1,5 +1,5 @@
 
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, JSON, func
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
@@ -31,10 +31,11 @@ class Product(Base):
             "name": self.name,
             "description": self.description,
             "category_id": self.category_id,
+            "shop_id": self.shop_id,
             "price": self.price,
             "is_available": self.is_available,
             "image_urls": self.image_urls,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-            "category": self.category.to_dict() if self.category else None  # Assuming Category has a to_dict method
+            "category": self.category.to_dict() if self.category else None
         }

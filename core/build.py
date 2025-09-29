@@ -1,7 +1,8 @@
+
 from fastapi import FastAPI, responses
 
 from core import setup as db_setup
-from api.v1.router import product, user, shop, cart
+from api.v1.router import product, user, shop, cart, category
 from config.setting import app_settings
 
 
@@ -29,7 +30,7 @@ class AppBuilder:
         )
 
         self._app.include_router(
-            user.user_router,
+            category.category_router,
             prefix=app_settings.API_PREFIX,
             tags=["Category"]
         )

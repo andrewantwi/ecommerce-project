@@ -12,7 +12,6 @@ category_router = fastapi.APIRouter(prefix="/categories")
 async def get_categories():
     logger.info("Router: Getting all categories")
     categories =  CategoryController.get_categories()
-    print(categories)
     return categories
 
 

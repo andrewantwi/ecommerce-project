@@ -1,21 +1,32 @@
-from pydantic import BaseModel, HttpUrl
-from typing import List, Optional
 from datetime import datetime
+from pydantic import BaseModel
+from typing import Optional, List
 
 
-class CategoryIn(BaseModel):
+# Base schema (shared fields)
+class CategoryBase(BaseModel):
     name: str
-    slug: str
     description: Optional[str] = None
+    image_url: Optional[str] = None
 
-class CategoryOut(BaseModel):
-    name: str
-    slug: str
-    description: Optional[str] = None
-    # image_url: Optional[HttpUrl] = None
 
+# Input schema (used for creating new categories)
+class CategoryIn(CategoryBase):
+    pass
+
+
+# Update schema (all fields optional for partial updates)
 class CategoryUpdate(BaseModel):
-    name: str
-    slug: str
+    name: Optional[str] = None
     description: Optional[str] = None
+    image_url: Optional[str] = None
 
+
+# Output schema (includes DB-generated fields)
+class CategoryOut(CategoryBase):
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True   # ✅ for ORM mode with SQLAlchemy

@@ -24,6 +24,7 @@ async def get_product(product_id: int):
 
 @product_router.post("/", response_model=ProductOut)
 async def create_product(product: ProductIn):
+    logger.info(f"Router: Creating Product with {product}")
     return ProductController.create_product(product)
 
 

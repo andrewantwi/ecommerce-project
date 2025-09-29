@@ -1,6 +1,7 @@
 from typing import List
 from loguru import logger
 import fastapi
+from utils.session import SessionManager as DBSession
 
 from controller.cart import CartController
 from schemas.cart import CartOut, CartIn, CartUpdate
@@ -24,7 +25,9 @@ async def get_cart(cart_id: int):
 
 @cart_router.post("/", response_model=CartOut)
 async def create_cart(cart: CartIn):
-    return CartController.create_cart(cart)
+    with DBSession() as db:
+        cart_instance = CartController.create_cart(cart, db)
+    return cart_instance.to_dict()
 
 @cart_router.post("/add_to_cart", response_model=CartItemOut)
 async def add_to_cart(cart_item_in: CartItemIn):

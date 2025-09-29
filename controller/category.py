@@ -1,11 +1,10 @@
 from loguru import logger
 from fastapi import HTTPException, status
-from sqlalchemy.exc import SQLAlchemyError
-
 from models.category import Category
 from schemas.category import CategoryIn, CategoryUpdate
 from utils.session import SessionManager as DBSession
 from fastapi.encoders import jsonable_encoder
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 
 class CategoryController:
@@ -45,18 +44,30 @@ class CategoryController:
         try:
             with DBSession() as db:
                 category_instance = Category(**category.model_dump())
-                logger.info(f"Controller: Creating category: {category_instance}")
+                logger.info(f"Controller: Creating category: {category_instance.to_dict()}")
                 db.add(category_instance)
                 db.commit()
                 db.refresh(category_instance)
                 logger.info(f"Controller: Category created with ID {category_instance.id}")
                 return category_instance.to_dict()
+        except IntegrityError as e:
+            logger.error(f"Controller: Duplicate category name '{category.name}': {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Category with name '{category.name}' already exists"
+            )
         except SQLAlchemyError as e:
-            logger.error(f"Controller: SQLAlchemy Error while creating category {category.username}: {str(e)}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database error")
+            logger.error(f"Controller: SQLAlchemy Error while creating category {category.name}: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database error"
+            )
         except Exception as e:
             logger.error(f"Controller: Error creating category: {str(e)}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error creating category")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error creating category"
+            )
 
     @staticmethod
     def update_category(category_id: int, update_data: CategoryUpdate):

@@ -11,8 +11,7 @@ shop_router = fastapi.APIRouter(prefix="/shops")
 @shop_router.get("/", response_model=List[ShopOut])
 async def get_shops():
     logger.info("Router: Getting all shops")
-    shops=  ShopController.get_shops()
-    return shops
+    return ShopController.get_shops()
 
 
 @shop_router.get("/{shop_id}", response_model=ShopOut)

@@ -12,10 +12,12 @@ class ShopUpdate(BaseModel):
     name: Optional[str] = None
 
 
+
 class ShopOut(ShopIn):
     id: int
     owner_id: int
     created_at: datetime
+    updated_at : datetime
 
     class Config:
         from_attributes = True
