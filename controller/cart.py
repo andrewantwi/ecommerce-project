@@ -2,7 +2,7 @@ from loguru import logger
 from fastapi import HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
 
-from models import CartItem
+from models import CartItem, Product
 from models.cart import Cart
 from schemas.cart import CartIn, CartUpdate
 from schemas.cart_item import CartItemOut, CartItemIn
@@ -91,8 +91,11 @@ class CartController:
     def add_to_cart(cart_item_in : CartItemIn):
         try:
             with DBSession() as db:
-                # Check if the user already has a cart
+
                 cart = db.query(Cart).filter(Cart.user_id == cart_item_in.user_id).first()
+                exists = db.query(Product).filter(Product.id == cart_item_in.product_id).first()
+                if not exists:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
 
                 if not cart:
                     cart = Cart(user_id=cart_item_in.user_id)
@@ -100,7 +103,6 @@ class CartController:
                     db.commit()
                     db.refresh(cart)
 
-                # Check if item already exists in the cart
                 cart_item = db.query(CartItem).filter(
                     CartItem.cart_id == cart.id,
                     CartItem.product_id == cart_item_in.product_id

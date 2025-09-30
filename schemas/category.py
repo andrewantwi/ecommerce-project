@@ -29,4 +29,4 @@ class CategoryOut(CategoryBase):
     updated_at: Optional[datetime] = None
 
     class Config:
-        from_attributes = True   # ✅ for ORM mode with SQLAlchemy
+        from_attributes = True
