@@ -3,7 +3,7 @@ from loguru import logger
 import fastapi
 
 from controller.product import ProductController
-from schemas.product import ProductOut, ProductIn, ProductUpdate
+from schemas.product import ProductOut, ProductIn, ProductUpdate, HomepageProductsResponse
 
 product_router = fastapi.APIRouter(prefix="/products")
 
@@ -36,4 +36,5 @@ async def update_product(product_id: int, product: ProductUpdate):
 @product_router.delete("/{product_id}")
 async def delete_product(product_id: int):
     return ProductController.delete_product(product_id)
+
 

@@ -2,8 +2,6 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
-
-
 from core.setup import Base
 
 
@@ -21,9 +19,14 @@ class Product(Base):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
+    total_sales = Column(Integer, default=0)
+    view_count = Column(Integer, default=0)
+    featured = Column(Boolean, default=False)
+
     shop = relationship("Shop", back_populates="products")
     cart_items = relationship("CartItem", back_populates="product", cascade="all, delete-orphan")
     category = relationship("Category", back_populates="products")
+
 
     def to_dict(self):
         return {

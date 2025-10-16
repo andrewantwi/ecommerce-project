@@ -36,3 +36,7 @@ async def update_user(user_id: int, user: UserUpdate):
 async def delete_user(user_id: int):
     return UserController.delete_user(user_id)
 
+@user_router.get('/cart/{user_id}')
+async def get_user_cart(user_id: int):
+    return UserController.get_user_cart(user_id)
+

@@ -2,7 +2,7 @@
 from fastapi import FastAPI, responses
 
 from core import setup as db_setup
-from api.v1.router import product, user, shop, cart, category
+from api.v1.router import product, user, shop, cart, category, homepage
 from config.setting import app_settings
 
 
@@ -44,6 +44,14 @@ class AppBuilder:
             prefix=app_settings.API_PREFIX,
             tags=["Shop"]
         )
+        self._app.include_router(
+            homepage.homepage_router,
+            prefix=app_settings.API_PREFIX,
+            tags=["Homepage"]
+        )
+
+
+
 
         @self._app.get("/", include_in_schema=False)
         def index():

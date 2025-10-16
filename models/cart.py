@@ -1,8 +1,5 @@
-from pydantic import BaseModel
 from sqlalchemy import Column, Integer, ForeignKey, DateTime, Float, func
 from sqlalchemy.orm import relationship
-from datetime import datetime
-
 from core.setup import Base
 
 
@@ -17,7 +14,7 @@ class Cart(Base):
 
     user = relationship("User", back_populates="cart", foreign_keys=[user_id])
 
-    cart_items = relationship("CartItem", back_populates="cart",lazy="subquery", cascade="all, delete-orphan")
+    cart_items = relationship("CartItem", back_populates="cart",lazy="selectin", cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
@@ -28,6 +25,9 @@ class Cart(Base):
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "cart_items": [item.to_dict() for item in self.cart_items] if self.cart_items else []
         }
+
+
+
 
     def calculate_total(self):
         """Recalculate total price from cart items."""

@@ -2,6 +2,8 @@ from loguru import logger
 from fastapi import HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy import or_
+
+from models import Cart
 from models.user import User
 from controller.cart import CartController
 from schemas.cart import CartIn
@@ -42,7 +44,6 @@ class UserController:
         except Exception as e:
             logger.error(f"Controller: Error fetching user with ID {user_id}: {str(e)}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error fetching user")
-
 
 
     @staticmethod
@@ -158,4 +159,28 @@ class UserController:
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Error deleting user"
                 )
+
+    @staticmethod
+    def get_user_cart(user_id: int):
+        try:
+            with DBSession() as db:
+                user = db.query(User).filter(User.id == user_id).first()
+                if not user:
+                    logger.warning(f"User with ID {user_id} not found.")
+                    return {"message": "User not found"}, 404
+
+                cart = db.query(Cart).filter(Cart.user_id == user_id).first()
+                if not cart:
+                    logger.info(f"No existing cart for user {user_id}. Creating a new one.")
+                    cart = Cart(user_id=user_id)
+                    db.add(cart)
+                    db.commit()
+                    db.refresh(cart)
+                logger.info(f"Cart for user with ID:: {user_id}  cart:: {cart.to_dict()}")
+                return cart.to_dict()
+        except Exception as e:
+            logger.error(f"Error fetching cart for user {user_id}: {e}")
+            raise
+
+
 

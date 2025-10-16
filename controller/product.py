@@ -33,6 +33,11 @@ class ProductController:
                 if not product:
                     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
                 logger.info(f"Controller: Fetched Product ==-> {jsonable_encoder(product)}")
+
+
+                product.view_count += 1
+                db.commit()
+                db.refresh(product)
                 return product.to_dict()
         except HTTPException as e:
             logger.error(f"Controller: Product with ID {product_id} not found")
@@ -137,3 +142,29 @@ class ProductController:
                     detail="Error deleting product"
                 )
 
+    @staticmethod
+    def get_popular_products():
+        with DBSession() as db:
+            logger.info("Getting popular products")
+            products = db.query(Product).order_by(Product.total_sales.desc()).limit(10).all()
+            products_list = [product.to_dict() for product in products]
+            logger.info(f"Popular products:: {products_list}")
+        return products_list
+
+    @staticmethod
+    def get_trending_products():
+        with DBSession() as db:
+            logger.info("Getting Trending products")
+            products = db.query(Product).order_by(Product.view_count.desc()).limit(10).all()
+            products_list = [product.to_dict() for product in products]
+            logger.info(f"Trending products:: {products_list}")
+        return products_list
+
+    @staticmethod
+    def get_featured_products():
+        with DBSession() as db:
+            logger.info("Getting Featured products")
+            products = db.query(Product).filter(Product.featured == True).limit(10).all()
+            products_list = [product.to_dict() for product in products]
+            logger.info(f"Featured products:: {products_list}")
+        return products_list

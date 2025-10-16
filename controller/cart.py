@@ -122,16 +122,10 @@ class CartController:
                         total_price=cart_item_in.quantity * cart_item_in.price
                     )
                     db.add(cart_item)
-
-                # Recalculate total price
                 cart.calculate_total()
-
-                # Commit changes
                 db.commit()
                 db.refresh(cart)
-
                 cart_item_instance = CartItemOut(**cart_item.to_dict())
-
                 return cart_item_instance
 
         except SQLAlchemyError as e:
@@ -141,3 +135,25 @@ class CartController:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Database error"
             )
+
+    @staticmethod
+    def clear_cart(cart_id: int):
+        try:
+            with DBSession() as db:
+                cart= db.query(Cart).filter(Cart.id == cart_id).first()
+                if not cart:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cart not found")
+                cart.cart_items.clear()
+                db.commit()
+
+        except SQLAlchemyError as e:
+            logger.error(f"SQLAlchemy Error while clearing cart: {str(e)}")
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database error"
+            )
+
+
+
+

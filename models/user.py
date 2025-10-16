@@ -11,10 +11,10 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     full_name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)  # Store hashed password, not plain text!
-    is_active = Column(Boolean, default=True)  # User can be active/inactive
-    is_admin = Column(Boolean, default=False)  # For admin access control
-    is_owner = Column(Boolean, default=False)  # For owner access control
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    is_admin = Column(Boolean, default=False)
+    is_owner = Column(Boolean, default=False)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

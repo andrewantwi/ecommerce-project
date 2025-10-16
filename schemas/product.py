@@ -37,3 +37,8 @@ class ProductUpdate(BaseModel):
     is_available: bool = True
     image_urls: List[str]
 
+
+class HomepageProductsResponse(BaseModel):
+    popular: List[ProductOut]
+    trending: List[ProductOut]
+    featured: List[ProductOut]
