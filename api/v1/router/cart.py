@@ -34,6 +34,11 @@ async def add_to_cart(cart_item_in: CartItemIn):
     logger.info(f"Router: Adding Cart Item: {cart_item_in}")
     return CartController.add_to_cart(cart_item_in)
 
+@cart_router.delete("/{cart_id}/remove_from_cart/{cart_item_id}", response_model=CartOut)
+async def remove_from_cart(cart_id:int, cart_item_id: int):
+    logger.info(f"Router: Deleting cart_item with ID: {cart_item_id} from cart with ID:: {cart_id}")
+    return CartController.remove_from_cart(cart_id,cart_item_id)
+
 
 @cart_router.put("/{cart_id}", response_model=CartOut)
 async def update_cart(cart_id: int, cart: CartUpdate):

@@ -15,3 +15,7 @@ class Order(Base):
     created_at = Column(DateTime, default=func.now())
 
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
+
+    def calculate_total(self):
+        """Recalculate total price from order items."""
+        self.total_amount = sum(item.total_amount for item in self.items)

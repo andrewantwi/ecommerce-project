@@ -104,6 +104,7 @@ class UserController:
                 detail=f"Unexpected error: {str(e)}"
             )
 
+
     @staticmethod
     def update_user(user_id: int, update_data: UserUpdate):
         try:
@@ -159,6 +160,8 @@ class UserController:
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Error deleting user"
                 )
+
+
 
     @staticmethod
     def get_user_cart(user_id: int):

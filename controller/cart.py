@@ -88,6 +88,48 @@ class CartController:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database error")
 
     @staticmethod
+    def remove_from_cart(cart_id: int, cart_item_id: int):
+        try:
+            with DBSession() as db:
+                logger.info(f"Controller: Removing cart item {cart_item_id} from cart {cart_id}")
+
+                # Ensure the cart exists
+                cart = db.query(Cart).filter(Cart.id == cart_id).first()
+                if not cart:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Cart not found"
+                    )
+
+
+                cart_item = (
+                    db.query(CartItem)
+                    .filter(CartItem.id == cart_item_id, CartItem.cart_id == cart_id)
+                    .first()
+                )
+                if not cart_item:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Cart item not found in this cart"
+                    )
+
+                # Delete the specific cart item
+                db.delete(cart_item)
+                db.commit()
+                db.refresh(cart)
+
+                logger.info(f"Controller: Cart item {cart_item_id} removed from cart {cart_id}")
+                return cart.to_dict()
+        except SQLAlchemyError as e:
+            logger.error(
+                f"Controller: SQLAlchemy Error while removing item {cart_item_id} from cart {cart_id}: {str(e)}")
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database error while removing item"
+            )
+
+    @staticmethod
     def add_to_cart(cart_item_in : CartItemIn):
         try:
             with DBSession() as db:

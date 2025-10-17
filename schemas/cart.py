@@ -4,8 +4,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from schemas.cart_item import CartItemIn
-
+from schemas.cart_item import CartItemIn, CartItemOut
 
 
 class CartIn(BaseModel):
@@ -17,7 +16,7 @@ class CartOut(BaseModel):
     id: int
     user_id: int
     total_price: float
-    cart_items: List[CartItemIn] = None
+    cart_items: List[CartItemOut] = None
 
 class CartUpdate(BaseModel):
     user_id: int
