@@ -1,6 +1,5 @@
 from loguru import logger
 import fastapi
-
 from controller.product import ProductController
 from schemas.product import HomepageProductsResponse
 

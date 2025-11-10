@@ -1,7 +1,6 @@
 from loguru import logger
 from fastapi import HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
-
 from models import Category, Shop
 from models.product import Product
 from schemas.product import ProductIn, ProductUpdate
@@ -33,7 +32,6 @@ class ProductController:
                 if not product:
                     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
                 logger.info(f"Controller: Fetched Product ==-> {jsonable_encoder(product)}")
-
 
                 product.view_count += 1
                 db.commit()
@@ -121,14 +119,13 @@ class ProductController:
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Product with ID {product_id} not found"
                 )
-
             try:
                 db.delete(product)
                 db.commit()
                 logger.info(f"Controller: Product with ID {product_id} deleted")
                 return {"message": f"Product with ID {product_id} deleted successfully"}
             except SQLAlchemyError as e:
-                db.rollback()  # Rollback transaction in case of error
+                db.rollback()
                 logger.error(f"Controller: SQLAlchemy Error while deleting product with ID {product_id}: {str(e)}")
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -1,8 +1,9 @@
 
 from fastapi import FastAPI, responses
+from starlette.middleware.sessions import SessionMiddleware
 
 from core import setup as db_setup
-from api.v1.router import product, user, shop, cart, category, homepage
+from api.v1.router import product, user, shop, cart, category, homepage, auth
 from config.setting import app_settings
 
 
@@ -15,6 +16,8 @@ class AppBuilder:
         self._app = FastAPI(title=app_settings.API_NAME,
                             description=app_settings.API_DESCRIPTION,
                             )
+
+        self._app.add_middleware(SessionMiddleware, secret_key="b6b714004a486626f03d9940e8864bcb3506e7849987cbdfeab8ef9fe1e66dc0")
 
     def register_routes(self):
         """ Register all routes """
@@ -48,6 +51,11 @@ class AppBuilder:
             homepage.homepage_router,
             prefix=app_settings.API_PREFIX,
             tags=["Homepage"]
+        )
+        self._app.include_router(
+            auth.auth_router,
+            prefix=app_settings.API_PREFIX,
+            tags=["Authentication"]
         )
 
 

@@ -1,7 +1,6 @@
 from loguru import logger
 from fastapi import HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
-
 from models import CartItem, Product
 from models.cart import Cart
 from schemas.cart import CartIn, CartUpdate
@@ -53,6 +52,7 @@ class CartController:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Database error"
             )
+
     @staticmethod
     def update_cart(cart_id: int, update_data: CartUpdate):
         try:
@@ -92,16 +92,12 @@ class CartController:
         try:
             with DBSession() as db:
                 logger.info(f"Controller: Removing cart item {cart_item_id} from cart {cart_id}")
-
-                # Ensure the cart exists
                 cart = db.query(Cart).filter(Cart.id == cart_id).first()
                 if not cart:
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="Cart not found"
                     )
-
-
                 cart_item = (
                     db.query(CartItem)
                     .filter(CartItem.id == cart_item_id, CartItem.cart_id == cart_id)
@@ -117,7 +113,6 @@ class CartController:
                 db.delete(cart_item)
                 db.commit()
                 db.refresh(cart)
-
                 logger.info(f"Controller: Cart item {cart_item_id} removed from cart {cart_id}")
                 return cart.to_dict()
         except SQLAlchemyError as e:
@@ -133,7 +128,6 @@ class CartController:
     def add_to_cart(cart_item_in : CartItemIn):
         try:
             with DBSession() as db:
-
                 cart = db.query(Cart).filter(Cart.user_id == cart_item_in.user_id).first()
                 exists = db.query(Product).filter(Product.id == cart_item_in.product_id).first()
                 if not exists:
@@ -149,13 +143,10 @@ class CartController:
                     CartItem.cart_id == cart.id,
                     CartItem.product_id == cart_item_in.product_id
                 ).first()
-
                 if cart_item:
-                    # Update quantity and total price
                     cart_item.quantity += cart_item_in.quantity
                     cart_item.update_total_price()
                 else:
-                    # Create a new cart item
                     cart_item = CartItem(
                         cart_id=cart.id,
                         product_id=cart_item_in.product_id,
@@ -187,7 +178,6 @@ class CartController:
                     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cart not found")
                 cart.cart_items.clear()
                 db.commit()
-
         except SQLAlchemyError as e:
             logger.error(f"SQLAlchemy Error while clearing cart: {str(e)}")
             db.rollback()

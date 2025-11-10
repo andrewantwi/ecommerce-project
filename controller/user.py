@@ -3,6 +3,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy import or_
 
+from core.auth import hash_password, generate_verification_token, send_verification_email
 from models import Cart
 from models.user import User
 from controller.cart import CartController
@@ -10,7 +11,6 @@ from schemas.cart import CartIn
 from schemas.user import UserIn, UserUpdate
 from utils.session import SessionManager as DBSession
 from fastapi.encoders import jsonable_encoder
-
 
 
 class UserController:
@@ -45,7 +45,6 @@ class UserController:
             logger.error(f"Controller: Error fetching user with ID {user_id}: {str(e)}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error fetching user")
 
-
     @staticmethod
     def create_user(user: UserIn):
         try:
@@ -66,7 +65,14 @@ class UserController:
                             detail="User with this Email already exists"
                         )
 
-                user_instance = User(**user.model_dump())
+                user_instance = User(
+                    full_name=user.full_name,
+                    email=user.email,
+                    hashed_password=hash_password(user.hashed_password),
+                    is_active=False,
+                    is_verified=False,
+                    verification_token=generate_verification_token()
+                )
                 db.add(user_instance)
                 db.commit()
                 db.refresh(user_instance)
@@ -78,10 +84,12 @@ class UserController:
                 db.commit()
                 db.refresh(user_instance)
 
+
+                send_verification_email(str(user.email), user.verification_token)
+
                 return user_instance.to_dict()
 
         except HTTPException:
-            # let FastAPI handle 400 errors
             raise
 
         except IntegrityError:
@@ -104,7 +112,6 @@ class UserController:
                 detail=f"Unexpected error: {str(e)}"
             )
 
-
     @staticmethod
     def update_user(user_id: int, update_data: UserUpdate):
         try:
@@ -126,7 +133,8 @@ class UserController:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
         except Exception as e:
             logger.error(f"Controller: Error updating user with ID {user_id}: {str(e)}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error updating user: {str(e)}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                detail=f"Error updating user: {str(e)}")
 
     @staticmethod
     def delete_user(user_id: int):
@@ -161,8 +169,6 @@ class UserController:
                     detail="Error deleting user"
                 )
 
-
-
     @staticmethod
     def get_user_cart(user_id: int):
         try:
@@ -184,6 +190,3 @@ class UserController:
         except Exception as e:
             logger.error(f"Error fetching cart for user {user_id}: {e}")
             raise
-
-
-
