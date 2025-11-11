@@ -20,12 +20,10 @@ async def get_carts(current_user: User = Depends(get_current_user)):
     logger.info("Router: Getting all carts")
     return CartController.get_carts()
 
-
 @cart_router.get("/{cart_id}", response_model=CartOut)
 async def get_cart(cart_id: int,current_user: User = Depends(get_current_user)):
     logger.info(f"Router: Getting Cart with ID: {cart_id}")
     return CartController.get_cart_by_id(cart_id)
-
 
 @cart_router.post("/", response_model=CartOut)
 async def create_cart(cart: CartIn,current_user: User = Depends(get_current_user)):
@@ -44,12 +42,10 @@ async def remove_from_cart(cart_id:int, cart_item_id: int,current_user: User = D
     logger.info(f"Router: Deleting cart_item with ID: {cart_item_id} from cart with ID:: {cart_id}")
     return CartController.remove_from_cart(cart_id,cart_item_id)
 
-
 @cart_router.put("/{cart_id}", response_model=CartOut)
 async def update_cart(cart_id: int, cart: CartUpdate,current_user: User = Depends(get_current_user)):
     logger.info(f"Updating cart with ID: {cart_id} and payload:{cart}")
     return CartController.update_cart(cart_id, cart)
-
 
 @cart_router.delete("/{cart_id}", response_model=CartOut)
 async def delete_cart(cart_id: int,current_user: User = Depends(get_current_user)):

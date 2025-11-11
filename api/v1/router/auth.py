@@ -1,6 +1,6 @@
 from fastapi.security import OAuth2PasswordRequestForm
 from schemas.user import UserOut, UserIn
-from schemas.auth import  TokenResponse
+from schemas.auth import TokenResponse, ForgotPasswordRequest, ResetPasswordRequest
 from fastapi import APIRouter, Depends, Request, HTTPException
 from starlette.responses import RedirectResponse, JSONResponse
 from authlib.integrations.starlette_client import OAuth
@@ -30,34 +30,36 @@ oauth.register(
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
     return AuthController.login(form_data)
 
+@auth_router.post("/forgot-password")
+def forgot_password(request: ForgotPasswordRequest):
+    return AuthController.forgot_password(request)
+
+@auth_router.post("/reset-password")
+def reset_password(request: ResetPasswordRequest):
+    return AuthController.reset_password(request)
+
 
 
 
 
 @auth_router.get("/google/login")
 async def google_login(request: Request):
-    logging.error(f"Session: {request.session}")
-    logging.error(f"Query params: {request.query_params}")
+    logging.info(f"Session: {request.session}")
+    logging.info(f"Query params: {request.query_params}")
     redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @auth_router.get("/google/callback")
 async def google_callback(request: Request):
-    # Optional: debug only in dev
-    # logging.debug(f"Callback URL: {request.url}")
-    # logging.debug(f"Session keys: {list(request.session.keys())}")
-
     try:
         token = await oauth.google.authorize_access_token(request)
         user_info = token.get("userinfo")
         if not user_info:
             raise HTTPException(status_code=400, detail="No user info from Google")
 
-        # Your logic
         user = AuthController.google_sign_in(user_info)
         jwt_token = create_access_token({"sub": user.email})
 
-        # Return clean JSON
         return {
             "access_token": jwt_token,
             "token_type": "bearer",

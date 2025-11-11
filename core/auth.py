@@ -1,16 +1,17 @@
+from dotenv import load_dotenv
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
+import os
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from utils.session import SessionManager as DBSession
 from models.user import User
 import uuid
-import smtplib
-from email.mime.text import MIMEText
 
+load_dotenv()
 
-SECRET_KEY = "your_secret_key_here"
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 4000
 
@@ -18,18 +19,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
-
-def send_verification_email(email: str, token: str):
-    verify_link = f"http://localhost:8000/api/v1/auth/verify?token={token}"
-    msg = MIMEText(f"Click this link to verify your email: {verify_link}")
-    msg['Subject'] = 'Verify your email'
-    msg['From'] = 'no-reply@yourapp.com'
-    msg['To'] = email
-
-    with smtplib.SMTP('smtp.gmail.com', 587) as server:
-        server.starttls()
-        server.login("your_email@gmail.com", "app_password")
-        server.send_message(msg)
 
 
 
@@ -76,3 +65,18 @@ def verify_token(token: str):
 
 def generate_verification_token():
     return str(uuid.uuid4())
+
+def create_password_reset_token(email: str):
+    expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode = {"sub": email, "exp": expire}
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def verify_password_reset_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            return None
+        return email
+    except Exception as e:
+        return None

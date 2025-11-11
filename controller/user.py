@@ -3,7 +3,8 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy import or_
 
-from core.auth import hash_password, generate_verification_token, send_verification_email
+from core.auth import hash_password, generate_verification_token
+from core.mailer import send_verification_email
 from models import Cart
 from models.user import User
 from controller.cart import CartController
